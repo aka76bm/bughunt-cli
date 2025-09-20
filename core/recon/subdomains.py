@@ -88,37 +88,45 @@ def get_subdomains_from_wayback(domain):
         print("Error decoding JSON response from Wayback Machine")
         return []
 
+def enumerate_subdomains(domain, dns_wordlist=None):
+    """
+    Enumerates subdomains using multiple sources: crt.sh, DNS brute force, and Wayback Machine.
+    """
+    all_subdomains = set()
+
+    print(f"[*] Enumerating subdomains for {domain}...")
+
+    # crt.sh
+    print(f"    [*] Querying crt.sh for {domain}...")
+    crtsh_subdomains = get_subdomains_from_crtsh(domain)
+    if crtsh_subdomains:
+        all_subdomains.update(crtsh_subdomains)
+        print(f"        [+] Found {len(crtsh_subdomains)} subdomains from crt.sh")
+
+    # DNS Brute Force
+    print(f"    [*] Starting DNS brute force for {domain}...")
+    dns_subdomains = dns_brute_force(domain, dns_wordlist)
+    if dns_subdomains:
+        all_subdomains.update(dns_subdomains)
+        print(f"        [+] Found {len(dns_subdomains)} subdomains from DNS brute force")
+
+    # Wayback Machine
+    print(f"    [*] Querying Wayback Machine for {domain}...")
+    wayback_subdomains = get_subdomains_from_wayback(domain)
+    if wayback_subdomains:
+        all_subdomains.update(wayback_subdomains)
+        print(f"        [+] Found {len(wayback_subdomains)} subdomains from Wayback Machine")
+
+    print(f"[*] Total unique subdomains found for {domain}: {len(all_subdomains)}")
+    return sorted(list(all_subdomains))
+
 if __name__ == '__main__':
-    # Example usage for crt.sh
-    target_domain_crtsh = "example.com"
-    print(f"Searching for subdomains of {target_domain_crtsh} using crt.sh...")
-    found_subdomains_crtsh = get_subdomains_from_crtsh(target_domain_crtsh)
-    if found_subdomains_crtsh:
-        for sd in found_subdomains_crtsh:
+    target_domain = "example.com"
+    print(f"Running comprehensive subdomain enumeration for {target_domain}...")
+    found_subdomains = enumerate_subdomains(target_domain)
+    if found_subdomains:
+        print("\n--- Discovered Subdomains ---")
+        for sd in found_subdomains:
             print(sd)
     else:
-        print(f"No subdomains found for {target_domain_crtsh} via crt.sh or an error occurred.")
-
-    print("\n" + "="*50 + "\n")
-
-    # Example usage for DNS brute force
-    target_domain_dns = "google.com" # Using google.com for a more likely hit with a small wordlist
-    print(f"Searching for subdomains of {target_domain_dns} using DNS brute force...")
-    found_subdomains_dns = dns_brute_force(target_domain_dns)
-    if found_subdomains_dns:
-        for sd in found_subdomains_dns:
-            print(sd)
-    else:
-        print(f"No subdomains found for {target_domain_dns} via DNS brute force or an error occurred.")
-
-    print("\n" + "="*50 + "\n")
-
-    # Example usage for Wayback Machine
-    target_domain_wayback = "example.com"
-    print(f"Searching for subdomains of {target_domain_wayback} using Wayback Machine...")
-    found_subdomains_wayback = get_subdomains_from_wayback(target_domain_wayback)
-    if found_subdomains_wayback:
-        for sd in found_subdomains_wayback:
-            print(sd)
-    else:
-        print(f"No subdomains found for {target_domain_wayback} via Wayback Machine or an error occurred.")
+        print(f"No subdomains found for {target_domain} or an error occurred.")
